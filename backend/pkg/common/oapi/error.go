@@ -5,6 +5,8 @@ import (
 	"log"
 	"net/http"
 	"runtime/debug"
+
+	"undrakh.net/summarizer/cmd/web/app"
 )
 
 var (
@@ -14,7 +16,7 @@ var (
 // Shortcut that sends error response immediately
 func ServerError(w http.ResponseWriter, err error) {
 	trace := fmt.Sprintf("%s\n%s", err.Error(), debug.Stack())
-	ErrorLog.Println(trace)
+	app.ErrorLog.Output(2, trace)
 	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 }
 
