@@ -1,57 +1,49 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
+
+	"undrakh.net/summarizer/pkg/common/oapi"
 )
 
 type body struct {
-	Model              string `json:"model"`
-	Prompt             string `json:"prompt"`
-	Matokes            string `json:"matokes"`
-	Temperatures       string `json:"temperatures"`
-	Repetition_penalty string `json:"repetition_penalty"`
-	Stream             string `json:"stream"`
+	Model              string  `json:"model"`
+	Prompt             string  `json:"prompt"`
+	Temperatures       int     `json:"temperatures"`
+	Repetition_penalty float32 `json:"repetition_penalty"`
+	Stream             string  `json:"stream"`
 }
 
-func summarize(input Content) Content {
+func ToUnicode(message string) string {
+	unicodeStr := ""
+	for _, r := range message {
+		if r == ' ' {
+			unicodeStr += " " // Keep space as it is
+		} else {
+			unicodeStr += fmt.Sprintf("\\u%04x", r) // Convert other characters to Unicode escape sequence
+		}
+	}
+	return unicodeStr
+}
+
+func summarizeAPI(input Content) (*oapi.APIResponse, error) {
 	url := "https://test.egune.com/v1/completions"
 
-	jsonData, err := json.Marshal(payload)
-	if err != nil {
-		fmt.Println("Error marshaling JSON:", err)
-	}
-	fmt.Println(string(jsonData))
-
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
-	if err != nil {
-		fmt.Println("Error creating request:", err)
+	body := body{
+		Model:              "egune",
+		Prompt:             input.Content,
+		Temperatures:       0,
+		Repetition_penalty: 1.1,
+		Stream:             "false",
 	}
 
-	req.Header.Set("Authorization", "Bearer h3FyBvIY694Yo382HqfRumUxPpVS7TERyOCgPg7xK1ERqSWz3gsTwL9zC4ovf2QQhjAK31cXjo2pyMhUXHN53u0R4nZIerOnSgq1kkZ7usrLpugDcU6DtxcekXFT1oRm")
-	req.Header.Set("Content-Type", "application/json")
-
-	client := &http.Client{}
-	res, err := client.Do(req)
-	if err != nil {
-		fmt.Println("Error making request:", err)
+	req := oapi.NewRequest("POST", url)
+	req.Headers = map[string]string{
+		"Authorization": "h3FyBvIY694Yo382HqfRumUxPpVS7TERyOCgPg7xK1ERqSWz3gsTwL9zC4ovf2QQhjAK31cXjo2pyMhUXHN53u0R4nZIerOnSgq1kkZ7usrLpugDcU6DtxcekXFT1oRm",
+		"Content-Type":  "application/json",
 	}
-	defer res.Body.Close()
+	req.Data = body
+	res, err := req.Do()
 
-	if res.StatusCode != http.StatusOK {
-		bodyBytes, _ := io.ReadAll(res.Body)
-		fmt.Printf("Error: %d %s\n", res.StatusCode, string(bodyBytes))
-	}
-
-	bodyBytes, err := io.ReadAll(res.Body)
-	if err != nil {
-		fmt.Println("Error reading response body:", err)
-	}
-
-	fmt.Println("Response:", string(bodyBytes))
-
-	return input
+	return res, err
 }

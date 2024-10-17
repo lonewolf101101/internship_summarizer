@@ -11,7 +11,7 @@ func routes() http.Handler {
 	r.Use(logRequest)
 	r.Route("/", func(r chi.Router) {
 		r.Get("/", home)
-		r.Post("/summerize", getClientInput)
+		r.Post("/summerize", summarizer)
 	})
 	return r
 }
