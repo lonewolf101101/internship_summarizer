@@ -8,22 +8,17 @@ import (
 	"net/http"
 )
 
-type output struct {
-	OutputSentences int    `json:"output_sentences"`
-	Providers       string `json:"providers"`
-	Text            string `json:"text"`
-	Language        string `json:"language"`
+type body struct {
+	Model              string `json:"model"`
+	Prompt             string `json:"prompt"`
+	Matokes            string `json:"matokes"`
+	Temperatures       string `json:"temperatures"`
+	Repetition_penalty string `json:"repetition_penalty"`
+	Stream             string `json:"stream"`
 }
 
 func summarize(input Content) Content {
-	url := "https://api.edenai.run/v2/text/summarize"
-
-	payload := output{
-		OutputSentences: 3,
-		Providers:       "microsoft,connexun,openai,emvista",
-		Text:            "Barack Hussein Obama is an American politician who served as the 44th president of the United States from 2009 to 2017.",
-		Language:        "en",
-	}
+	url := "https://test.egune.com/v1/completions"
 
 	jsonData, err := json.Marshal(payload)
 	if err != nil {
@@ -36,7 +31,7 @@ func summarize(input Content) Content {
 		fmt.Println("Error creating request:", err)
 	}
 
-	req.Header.Set("Authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMjdiYTYwMzQtNjU1My00NzIzLTg4ZDktZDFiZmNhMWJhYjhlIiwidHlwZSI6ImFwaV90b2tlbiJ9.FmW56SiIAtVf4ZMUNR7mOu8Bxu6nLMvICkO0ysSmhIg")
+	req.Header.Set("Authorization", "Bearer h3FyBvIY694Yo382HqfRumUxPpVS7TERyOCgPg7xK1ERqSWz3gsTwL9zC4ovf2QQhjAK31cXjo2pyMhUXHN53u0R4nZIerOnSgq1kkZ7usrLpugDcU6DtxcekXFT1oRm")
 	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}
