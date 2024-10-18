@@ -9,7 +9,6 @@ import (
 )
 
 type Content struct {
-	Title   string `json:"title"`
 	Content string `json:"content"`
 	Summary string `json:"summary"`
 }
@@ -41,19 +40,20 @@ func summarizer(w http.ResponseWriter, r *http.Request) {
 		oapi.CustomError(w, http.StatusBadRequest, "Invalid JSON")
 		return
 	}
-	resp, err := summarizeAPI(content)
-	if err != nil {
-		oapi.ServerError(w, err)
-		return
-	}
-	if resp.ErrMessage != "" {
-		oapi.CustomError(w, resp.Code, resp.ErrMessage)
-		return
-	}
+	// resp, err := summarizeAPI(content)
+	// if err != nil {
+	// 	oapi.ServerError(w, err)
+	// 	return
+	// }
+	// if resp.ErrMessage != "" {
+	// 	oapi.CustomError(w, resp.Code, resp.ErrMessage)
+	// 	return
+	// }
 
 	// data := resp.Data
 	// content.Summary := data.prompt
 
+	content.Summary = "this the dummy data for this response:" + content.Content
 	response, err := json.Marshal(content)
 	if err != nil {
 		oapi.ServerError(w, err)
