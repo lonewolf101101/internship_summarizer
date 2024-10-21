@@ -3,8 +3,10 @@ package main
 import (
 	"encoding/json"
 	"io"
+	"log"
 	"net/http"
 
+	"undrakh.net/summarizer/cmd/web/app"
 	"undrakh.net/summarizer/pkg/common/oapi"
 )
 
@@ -22,6 +24,18 @@ func echo(w http.ResponseWriter, r *http.Request) {
 	io.Copy(w, r.Body)
 }
 
+func logout(w http.ResponseWriter, r *http.Request) {
+	app.Session.Remove(r, "auth_user_id")
+	app.Session.Remove(r, "oauth2_provider_name")
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+func clearSession(w http.ResponseWriter, r *http.Request) {
+	app.Session.Remove(r, "auth_user_id")
+	app.Session.Remove(r, "oauth2_provider_name")
+	oapi.SendResp(w, "OK")
+}
+
 func home(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("hello world"))
 }
@@ -29,6 +43,7 @@ func home(w http.ResponseWriter, r *http.Request) {
 func summarizer(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
+		log.Printf("Unable to read body: %v", err)
 		oapi.CustomError(w, http.StatusBadRequest, "Unable to read body")
 		return
 	}
@@ -37,23 +52,28 @@ func summarizer(w http.ResponseWriter, r *http.Request) {
 	var content Content
 	err = json.Unmarshal(body, &content)
 	if err != nil {
+		log.Printf("Invalid JSON: %v", err)
 		oapi.CustomError(w, http.StatusBadRequest, "Invalid JSON")
 		return
 	}
-	// resp, err := summarizeAPI(content)
-	// if err != nil {
-	// 	oapi.ServerError(w, err)
-	// 	return
-	// }
-	// if resp.ErrMessage != "" {
-	// 	oapi.CustomError(w, resp.Code, resp.ErrMessage)
-	// 	return
-	// }
 
-	// data := resp.Data
-	// content.Summary := data.prompt
+	resp, chatResp, err := summarizeAPI(content)
+	if err != nil {
+		oapi.ServerError(w, err)
+		return
+	}
 
-	content.Summary = "this the dummy data for this response:" + content.Content
+	if resp.ErrMessage != "" {
+		oapi.CustomError(w, resp.Code, resp.ErrMessage)
+		return
+	}
+
+	if len(chatResp.Choices) == 0 {
+		oapi.CustomError(w, http.StatusInternalServerError, "No choices returned from summarization")
+		return
+	}
+
+	content.Summary = chatResp.Choices[0].Message.Content
 	response, err := json.Marshal(content)
 	if err != nil {
 		oapi.ServerError(w, err)

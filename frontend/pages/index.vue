@@ -11,10 +11,8 @@
     </div>
     <button @click="submitText">Submit</button>
     
-    <!-- Display error message if any -->
     <div v-if="errorMessage" class="error">{{ errorMessage }}</div>
 
-    <!-- Display the response if available -->
     <div v-if="response">
       <h2>Summary</h2>
       <p>{{ response.summary }}</p>

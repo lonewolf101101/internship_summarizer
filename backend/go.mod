@@ -28,4 +28,17 @@ require (
 	gorm.io/gorm v1.25.10 // indirect
 )
 
-require gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
+require (
+	golang.org/x/oauth2 v0.23.0
+	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
+)
+
+require (
+	cloud.google.com/go/compute/metadata v0.3.0 // indirect
+	github.com/golangcollege/sessions v1.2.0
+)
+
+require (
+	github.com/google/uuid v1.6.0
+	golang.org/x/sys v0.15.0 // indirect
+)

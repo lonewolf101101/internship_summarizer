@@ -12,6 +12,7 @@ func routes() http.Handler {
 	r.Use(logRequest)
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Recoverer)
+
 	r.Route("/", func(r chi.Router) {
 		r.Get("/", home)
 		r.Post("/summarize", summarizer)

@@ -1,0 +1,16 @@
+mode: debug
+port: :4000
+session_secret: secret
+dsn: host=localhost port=5432 user=postgres password=password dbname=boilerplate
+timezone_loc: Asia/Ulaanbaatar
+image_path: "../images"
+oauth2:
+    google:
+        redirect_url: https://localhost:3000/pub/auth/google/callback
+        client_id: client_id
+        client_secret: client_secret
+        scopes:
+            - https://www.googleapis.com/auth/userinfo.email
+            - https://www.googleapis.com/auth/userinfo.profile
+            - openid
+        user_info_endpoint: https://www.googleapis.com/oauth2/v2/userinfo?access_token=
