@@ -74,18 +74,18 @@ func requireAuth(next http.Handler) http.Handler {
 	})
 }
 
-func requireAdmin(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		user := r.Context().Value(app.ContextKeyAuthUser).(*userman.User)
+// func requireAdmin(next http.Handler) http.Handler {
+// 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+// 		user := r.Context().Value(app.ContextKeyAuthUser).(*userman.User)
 
-		if user.Role != userman.ROLE_ADMIN {
-			oapi.ClientError(w, http.StatusUnauthorized)
-			return
-		}
+// 		if user.Role != userman.ROLE_ADMIN {
+// 			oapi.ClientError(w, http.StatusUnauthorized)
+// 			return
+// 		}
 
-		next.ServeHTTP(w, r)
-	})
-}
+// 		next.ServeHTTP(w, r)
+// 	})
+// }
 
 func setChosenUser(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

@@ -1,7 +1,7 @@
 mode: debug
 port: :4000
 session_secret: secret
-dsn: host=localhost port=5432 user=postgres password=password dbname=boilerplate
+dsn: host=localhost port=5432 user=postgres password=uk04241031 dbname=chimege_internship
 timezone_loc: Asia/Ulaanbaatar
 image_path: "../images"
 oauth2:

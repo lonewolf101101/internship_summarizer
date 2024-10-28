@@ -96,7 +96,7 @@ func oauthCallback(oauthClient *easyOAuth2.EasyOAuthClient) func(w http.Response
 		}
 
 		if user == nil {
-			userData.Role = userman.ROLE_BASIC
+
 			userData.UUID = uuid.NewString()
 			userData.LastLogin = time.Now()
 			userData.IsVerified = true
@@ -131,4 +131,19 @@ func oauthCallback(oauthClient *easyOAuth2.EasyOAuthClient) func(w http.Response
 func handleOAuthError(w http.ResponseWriter, r *http.Request, errorStr string) {
 	app.ErrorLog.Println(errorStr)
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+}
+
+func me(w http.ResponseWriter, r *http.Request) {
+	loggedUser := r.Context().Value(app.ContextKeyChosenUser).(*userman.User)
+	if loggedUser == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	response, err := app.Users.GetWithRoles(loggedUser)
+	if err != nil {
+		oapi.ServerError(w, err)
+		return
+	}
+	oapi.SendResp(w, response)
 }

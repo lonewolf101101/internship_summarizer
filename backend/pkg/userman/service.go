@@ -68,7 +68,7 @@ func (s *Service) GetAll(filter *Filter, page, size int) ([]*User, int, error) {
 	query := s.parseFilter(filter)
 
 	var count int64
-	if err := query.Model(&User{}).Count(&count).Error; err != nil {
+	if err := query.Count(&count).Error; err != nil {
 		return nil, 0, err
 	}
 
@@ -80,7 +80,7 @@ func (s *Service) GetAll(filter *Filter, page, size int) ([]*User, int, error) {
 	}
 
 	var users []*User
-	if err := query.Order("role, email").Find(&users).Error; err != nil {
+	if err := query.Order("roles.name, users.email").Preload("Role").Find(&users).Error; err != nil {
 		return nil, 0, err
 	}
 
@@ -99,6 +99,56 @@ func (s *Service) Get(data *User) (*User, error) {
 	}
 
 	return user, nil
+}
+
+func (s *Service) checkRoles(data *User, roleID int) (bool, error) {
+	var user User
+
+	if err := s.db.
+		Where("self_deleted_at IS NULL").
+		First(&user, data.UUID).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return false, ErrNotFound
+		}
+		return false, err
+	}
+
+	var count int64
+	if err := s.db.
+		Model(&UserRole{}).
+		Where("uuid = ? AND rid = ?", user.UUID, roleID).
+		Count(&count).Error; err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
+}
+
+func (s *Service) GetWithRoles(data *User) (*UserWithRoles, error) {
+	var userWithRoles UserWithRoles
+	var user *User
+
+	if err := s.db.
+		Where("self_deleted_at IS NULL AND uuid = ?", data.UUID).
+		First(&user).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrNotFound
+		}
+		return nil, err
+	}
+
+	userWithRoles.User = *user
+
+	// Then, get the associated roles for the user
+	if err := s.db.
+		Joins("JOIN user_roles ON user_roles.uuid = users.uuid").
+		Joins("JOIN roles ON roles.rid = user_roles.rid").
+		Where("users.uuid = ?", userWithRoles.User.UUID).
+		Find(&userWithRoles.Roles).Error; err != nil {
+		return nil, err
+	}
+
+	return &userWithRoles, nil
 }
 
 func (s *Service) GetWithAuthTypes(data *User, authTypes []string) (*User, error) {
@@ -152,5 +202,17 @@ func (s *Service) Save(data *User) (*User, error) {
 }
 
 func (s *Service) Delete(id int) error {
-	return s.db.Delete(new(User), id).Error
+	// Start a new transaction
+	return s.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Where("user_id = ?", id).Delete(new(UserRole)).Error; err != nil {
+			return err
+		}
+
+		// Delete the user record itself
+		if err := tx.Delete(new(User), id).Error; err != nil {
+			return err
+		}
+
+		return nil
+	})
 }

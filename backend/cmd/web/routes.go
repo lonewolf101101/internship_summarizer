@@ -25,7 +25,6 @@ func routes() http.Handler {
 				r.Get("/callback", oauthCallback(app.GoogleOAuth2))
 			})
 		})
-
 	})
 	r.Route("/", func(r chi.Router) {
 		r.Get("/", home)
@@ -34,19 +33,18 @@ func routes() http.Handler {
 	r.With(authenticate, requireAuth).Route("/api", func(r chi.Router) {
 		r.Get("/me", me)
 		r.Post("/me", updateUserInfo)
-		r.HandleFunc("/ws", app.CustomerWSConnections.Handler)
 		r.Get("/logout", logout)
 
 		// TODO: Future plan: Admin
-		r.With(requireAdmin).Route("/users", func(r chi.Router) {
-			r.Get("/", getUsers)
-			r.Post("/", editUser)
-			r.With(setChosenUser).Route("/{UserID}", func(r chi.Router) {
-				r.Get("/", getUser)
-				r.Put("/", editUser)
-				r.Delete("/", deleteUser)
-			})
-		})
+		// r.With(requireAdmin).Route("/users", func(r chi.Router) {
+		// 	r.Get("/", getUsers)
+		// 	r.Post("/", editUser)
+		// 	r.With(setChosenUser).Route("/{UserID}", func(r chi.Router) {
+		// 		r.Get("/", getUser)
+		// 		r.Put("/", editUser)
+		// 		r.Delete("/", deleteUser)
+		// 	})
+		// })
 	})
 
 	return r
