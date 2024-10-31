@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"undrakh.net/summarizer/cmd/web/app"
 )
@@ -17,15 +18,30 @@ func main() {
 	flag.Parse()
 	app.Init()
 	defer app.Close()
+
 	closeOnSignalInterrupt(app.Close)
 
+	// panicOnError(app.DB.AutoMigrate(
+	// 	new(userman.User),
+	// 	new(roleman.Role),
+	// ))
+
 	srv := &http.Server{
-		Addr:     *addr,
-		ErrorLog: app.ErrorLog,
-		Handler:  routes(),
+		Addr:         *addr,
+		ErrorLog:     app.ErrorLog,
+		Handler:      routes(),
+		IdleTimeout:  time.Minute,
+		ReadTimeout:  10 * time.Minute,
+		WriteTimeout: 10 * time.Minute,
 	}
 	app.InfoLog.Printf("Starting server on %s", *addr)
 	app.ErrorLog.Fatal(srv.ListenAndServe())
+}
+
+func panicOnError(err error) {
+	if err != nil {
+		panic(err)
+	}
 }
 
 func closeOnSignalInterrupt(cleanupFunc func()) {

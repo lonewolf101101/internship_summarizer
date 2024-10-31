@@ -15,11 +15,19 @@ func routes() http.Handler {
 	r.Use(logRequest)
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Recoverer)
+	r.Use(app.Session.Enable)
+
+	r.Get("/ping", ping)
+
+	r.Post("/addrole", AddRoleHandler)
 
 	r.With(authenticate).Route("/pub", func(r chi.Router) {
 		r.Get("/logout", clearSession)
 
 		r.Route("/auth", func(r chi.Router) {
+			r.Route("/basic", func(r chi.Router) {
+				r.Post("/register", RegisterHandler)
+			})
 			r.Route("/google", func(r chi.Router) {
 				r.Get("/login", oauthLogin(app.GoogleOAuth2))
 				r.Get("/callback", oauthCallback(app.GoogleOAuth2))
@@ -35,16 +43,15 @@ func routes() http.Handler {
 		r.Post("/me", updateUserInfo)
 		r.Get("/logout", logout)
 
-		// TODO: Future plan: Admin
-		// r.With(requireAdmin).Route("/users", func(r chi.Router) {
-		// 	r.Get("/", getUsers)
-		// 	r.Post("/", editUser)
-		// 	r.With(setChosenUser).Route("/{UserID}", func(r chi.Router) {
-		// 		r.Get("/", getUser)
-		// 		r.Put("/", editUser)
-		// 		r.Delete("/", deleteUser)
-		// 	})
-		// })
+		r.With(requireAdmin).Route("/users", func(r chi.Router) {
+			r.Get("/", getUsers)
+			r.Post("/", editUser)
+			r.With(setChosenUser).Route("/{UserID}", func(r chi.Router) {
+				r.Get("/", getUser)
+				r.Put("/", editUser)
+				r.Delete("/", deleteUser)
+			})
+		})
 	})
 
 	return r

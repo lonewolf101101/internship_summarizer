@@ -86,10 +86,20 @@ func (s *Service) Get(data *Role) (*Role, error) {
 }
 
 func (s *Service) Save(data *Role) (*Role, error) {
-	if err := s.db.Save(data).Error; err != nil {
+	var createdRole *Role
+
+	err := s.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(data).Error; err != nil {
+			return err
+		}
+		createdRole = data
+		return nil
+	})
+
+	if err != nil {
 		return nil, err
 	}
-	return data, nil
+	return createdRole, nil
 }
 
 func (s *Service) Delete(id uint) error {

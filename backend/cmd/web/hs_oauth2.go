@@ -96,7 +96,6 @@ func oauthCallback(oauthClient *easyOAuth2.EasyOAuthClient) func(w http.Response
 		}
 
 		if user == nil {
-
 			userData.UUID = uuid.NewString()
 			userData.LastLogin = time.Now()
 			userData.IsVerified = true

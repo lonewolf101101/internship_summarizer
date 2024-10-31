@@ -9,9 +9,6 @@ import (
 )
 
 const (
-	ROLE_BASIC = "basic"
-	ROLE_ADMIN = "admin"
-
 	AUTH_TYPE_BASIC  = "username_password"
 	AUTH_TYPE_GOOGLE = "google"
 )

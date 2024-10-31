@@ -6,7 +6,7 @@ timezone_loc: Asia/Ulaanbaatar
 image_path: "../images"
 oauth2:
     google:
-        redirect_url: https://localhost:3000/pub/auth/google/callback
+        redirect_url: https://localhost:3300/pub/auth/google/callback
         client_id: client_id
         client_secret: client_secret
         scopes:

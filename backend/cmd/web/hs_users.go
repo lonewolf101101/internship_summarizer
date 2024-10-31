@@ -2,14 +2,26 @@ package main
 
 import (
 	"encoding/json"
+	"io"
 	"net/http"
 	"strconv"
 
 	"undrakh.net/summarizer/cmd/web/app"
 	"undrakh.net/summarizer/cmd/web/validators"
 	"undrakh.net/summarizer/pkg/common/oapi"
+	"undrakh.net/summarizer/pkg/roleman"
 	"undrakh.net/summarizer/pkg/userman"
 )
+
+type CreateRoleRequest struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+}
+
+type AddRoleRequest struct {
+	Name        string `json:"name"`
+	Description string `json:"description,omitempty"`
+}
 
 func getUsers(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
@@ -19,6 +31,7 @@ func getUsers(w http.ResponseWriter, r *http.Request) {
 	if page <= 0 {
 		page = 1
 	}
+
 	if size <= 0 || size > 100 {
 		size = 25
 	}
@@ -106,3 +119,41 @@ func updateUserInfo(w http.ResponseWriter, r *http.Request) {
 
 	oapi.SendResp(w, savedUser)
 }
+
+func AddRoleHandler(w http.ResponseWriter, r *http.Request) {
+	var input AddRoleRequest
+
+	// Read and parse the request body
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		oapi.CustomError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	if err := json.Unmarshal(body, &input); err != nil {
+		oapi.CustomError(w, http.StatusBadRequest, "Invalid JSON")
+		return
+	}
+
+	// Create a new Role instance
+	role := &roleman.Role{
+		Name:        input.Name,
+		Description: input.Description,
+	}
+
+	// Save the role to the database
+	role, err = app.Roles.Save(role)
+	if err != nil {
+		oapi.ServerError(w, err)
+		return
+	}
+
+	// Respond with the created role
+	oapi.SendResp(w, role)
+}
+
+// func addUserRole(w http.ResponseWriter, r *http.Request) {
+// 	var input AddUserRoleRequest
+// 	// Read and parse the request body
+// 	body, err := io.ReadAll(r.Body)
+// }

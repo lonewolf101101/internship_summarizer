@@ -9,6 +9,7 @@ import (
 	"github.com/go-chi/chi"
 	"undrakh.net/summarizer/cmd/web/app"
 	"undrakh.net/summarizer/pkg/common/oapi"
+	"undrakh.net/summarizer/pkg/roleman"
 	"undrakh.net/summarizer/pkg/userman"
 )
 
@@ -74,18 +75,36 @@ func requireAuth(next http.Handler) http.Handler {
 	})
 }
 
-// func requireAdmin(next http.Handler) http.Handler {
-// 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-// 		user := r.Context().Value(app.ContextKeyAuthUser).(*userman.User)
+func requireAdmin(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		user, ok := r.Context().Value(app.ContextKeyAuthUser).(*userman.User)
+		if !ok || user == nil {
+			oapi.ClientError(w, http.StatusUnauthorized)
+			return
+		}
 
-// 		if user.Role != userman.ROLE_ADMIN {
-// 			oapi.ClientError(w, http.StatusUnauthorized)
-// 			return
-// 		}
+		userWithRoles, err := app.Users.GetWithRoles(user)
+		if err != nil {
+			oapi.ServerError(w, err)
+			return
+		}
 
-// 		next.ServeHTTP(w, r)
-// 	})
-// }
+		isAdmin := false
+		for _, role := range userWithRoles.Roles {
+			if uint(role.ID) == roleman.ROLE_ADMIN {
+				isAdmin = true
+				break
+			}
+		}
+
+		if !isAdmin {
+			oapi.ClientError(w, http.StatusUnauthorized)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
 
 func setChosenUser(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

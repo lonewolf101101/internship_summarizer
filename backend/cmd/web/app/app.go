@@ -12,6 +12,7 @@ import (
 	"undrakh.net/summarizer/pkg/common/apputils"
 	"undrakh.net/summarizer/pkg/common/mailer"
 	"undrakh.net/summarizer/pkg/easyOAuth2"
+	"undrakh.net/summarizer/pkg/roleman"
 	"undrakh.net/summarizer/pkg/userman"
 )
 
@@ -26,6 +27,7 @@ var (
 
 	// Services
 	Mailer       *mailer.Mailer
+	Roles        *roleman.Service
 	Users        *userman.Service
 	GoogleOAuth2 *easyOAuth2.EasyOAuthClient
 )
@@ -56,7 +58,7 @@ func Init() {
 	DB = apputils.OpenDB(Config.DSN)
 
 	Users = userman.NewService(DB, InfoLog, ErrorLog)
-
+	Roles = roleman.NewService(DB, InfoLog, ErrorLog)
 	Session = sessions.New([]byte(Config.SessionSecret))
 	Session.Lifetime = 7 * 24 * time.Hour
 	Session.Secure = true

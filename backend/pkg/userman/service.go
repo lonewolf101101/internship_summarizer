@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"gorm.io/gorm"
+	"undrakh.net/summarizer/pkg/roleman"
 )
 
 type Service struct {
@@ -63,9 +64,8 @@ func (s *Service) Count(filter *Filter) (int, error) {
 
 	return int(count), nil
 }
-
 func (s *Service) GetAll(filter *Filter, page, size int) ([]*User, int, error) {
-	query := s.parseFilter(filter)
+	query := s.parseFilter(filter).Model(&User{})
 
 	var count int64
 	if err := query.Count(&count).Error; err != nil {
@@ -80,7 +80,8 @@ func (s *Service) GetAll(filter *Filter, page, size int) ([]*User, int, error) {
 	}
 
 	var users []*User
-	if err := query.Order("roles.name, users.email").Preload("Role").Find(&users).Error; err != nil {
+	// Removed Preload("Role") and adjusted Order
+	if err := query.Order("users.email").Find(&users).Error; err != nil {
 		return nil, 0, err
 	}
 
@@ -193,12 +194,47 @@ func (s *Service) GetRecentlyDeleted(data *User, authTypes []string) (*User, err
 
 	return user, nil
 }
+func (s *Service) AddRole(data *User, role *roleman.Role) error {
+	return s.db.Transaction(func(tx *gorm.DB) error {
+		// Check if the user already has the role
+		hasRole, err := s.checkRoles(data, int(role.RID))
+		if err != nil {
+			return err
+		}
+
+		if hasRole {
+			return nil
+		}
+
+		userRole := UserRole{
+			UUID: data.UUID,
+			RID:  int(role.RID),
+			Name: role.Name,
+		}
+
+		if err := tx.Create(&userRole).Error; err != nil {
+			return err
+		}
+
+		return nil
+	})
+}
 
 func (s *Service) Save(data *User) (*User, error) {
-	if err := s.db.Save(data).Error; err != nil {
+	var createdUser *User
+
+	err := s.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(data).Error; err != nil {
+			return err
+		}
+		createdUser = data
+		return nil
+	})
+
+	if err != nil {
 		return nil, err
 	}
-	return data, nil
+	return createdUser, nil
 }
 
 func (s *Service) Delete(id int) error {
