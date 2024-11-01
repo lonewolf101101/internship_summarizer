@@ -30,10 +30,10 @@ type User struct {
 
 type UserRole struct {
 	entities.Model
-	URID uint   `json:"id"`
-	RID  int    `json:"rid"`
-	UUID string `json:"uuid"`
-	Name string `json:"name"`
+	URID uint   `gorm:"primaryKey;autoIncrement;column:urid" json:"id"`
+	RID  int    `gorm:"column:rid" json:"rid"`
+	UUID string `gorm:"column:uuid" json:"uuid"`
+	Name string `gorm:"column:name" json:"name"`
 }
 
 type UserWithRoles struct {

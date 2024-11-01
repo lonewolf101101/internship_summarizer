@@ -37,6 +37,7 @@ func clearSession(w http.ResponseWriter, r *http.Request) {
 }
 
 func home(w http.ResponseWriter, r *http.Request) {
+	docstoreAPI()
 	w.Write([]byte("hello world"))
 }
 

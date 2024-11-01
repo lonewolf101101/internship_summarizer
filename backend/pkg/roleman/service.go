@@ -75,7 +75,7 @@ func (s *Service) GetAll(filter *Filter, page, size int) ([]*Role, int, error) {
 func (s *Service) Get(data *Role) (*Role, error) {
 	var role *Role
 
-	if err := s.db.First(&role, data.ID).Error; err != nil {
+	if err := s.db.First(&role, data.RID).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, ErrNotFound
 		}

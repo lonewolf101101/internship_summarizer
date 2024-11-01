@@ -48,5 +48,6 @@ CREATE TABLE sum_history (
     CONSTRAINT fk_user FOREIGN KEY (uuid) REFERENCES users(uuid) ON DELETE CASCADE
 ) INHERITS (model);
 
-
+SELECT * FROM roles;
+SELECT * FROM user_roles;
 SELECT * FROM users;

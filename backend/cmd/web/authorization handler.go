@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"time"
@@ -74,12 +75,17 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user = &userman.User{
-		UUID:         uuid.NewString(),
-		AuthType:     userman.AUTH_TYPE_BASIC,
-		PasswordHash: hashedPassword,
-		IsVerified:   false,
-		LastLogin:    time.Now(),
+		Name:           input.Name,
+		Email:          input.Email,
+		PhoneNumber:    input.PhoneNumber,
+		ProfilePicture: input.ProfilePicture,
+		UUID:           uuid.NewString(),
+		AuthType:       userman.AUTH_TYPE_BASIC,
+		PasswordHash:   hashedPassword,
+		IsVerified:     false,
+		LastLogin:      time.Now(),
 	}
+	fmt.Print(user)
 	user, err = app.Users.Save(user)
 	if err != nil {
 		oapi.ServerError(w, err)
@@ -105,6 +111,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		oapi.ServerError(w, err)
 		return
 	}
+
 	oapi.SendResp(w, resp)
 }
 
@@ -141,5 +148,5 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	app.Session.Put(r, "auth_user_id", user.ID)
 
-	oapi.SendResp(w, user)
+	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 }

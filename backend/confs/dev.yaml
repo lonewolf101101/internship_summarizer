@@ -1,12 +1,12 @@
 mode: debug
-port: :4000
+port: :3300
 session_secret: secret
 dsn: host=localhost port=5432 user=postgres password=uk04241031 dbname=chimege_internship
 timezone_loc: Asia/Ulaanbaatar
 image_path: "../images"
 oauth2:
     google:
-        redirect_url: https://localhost:3300/pub/auth/google/callback
+        redirect_url: https://localhost:3000/pub/auth/google/callback
         client_id: client_id
         client_secret: client_secret
         scopes:

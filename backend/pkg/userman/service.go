@@ -103,21 +103,11 @@ func (s *Service) Get(data *User) (*User, error) {
 }
 
 func (s *Service) checkRoles(data *User, roleID int) (bool, error) {
-	var user User
-
-	if err := s.db.
-		Where("self_deleted_at IS NULL").
-		First(&user, data.UUID).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return false, ErrNotFound
-		}
-		return false, err
-	}
-
 	var count int64
+
 	if err := s.db.
 		Model(&UserRole{}).
-		Where("uuid = ? AND rid = ?", user.UUID, roleID).
+		Where("uuid = ? AND rid = ?", data.UUID, roleID).
 		Count(&count).Error; err != nil {
 		return false, err
 	}
@@ -127,7 +117,7 @@ func (s *Service) checkRoles(data *User, roleID int) (bool, error) {
 
 func (s *Service) GetWithRoles(data *User) (*UserWithRoles, error) {
 	var userWithRoles UserWithRoles
-	var user *User
+	var user User // Changed to User instead of *User for better clarity
 
 	if err := s.db.
 		Where("self_deleted_at IS NULL AND uuid = ?", data.UUID).
@@ -138,10 +128,11 @@ func (s *Service) GetWithRoles(data *User) (*UserWithRoles, error) {
 		return nil, err
 	}
 
-	userWithRoles.User = *user
+	userWithRoles.User = user
 
-	// Then, get the associated roles for the user
 	if err := s.db.
+		Table("users").
+		Select("roles.*").
 		Joins("JOIN user_roles ON user_roles.uuid = users.uuid").
 		Joins("JOIN roles ON roles.rid = user_roles.rid").
 		Where("users.uuid = ?", userWithRoles.User.UUID).
@@ -224,7 +215,7 @@ func (s *Service) Save(data *User) (*User, error) {
 	var createdUser *User
 
 	err := s.db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Create(data).Error; err != nil {
+		if err := tx.Save(data).Error; err != nil {
 			return err
 		}
 		createdUser = data

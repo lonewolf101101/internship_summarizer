@@ -23,6 +23,11 @@ type AddRoleRequest struct {
 	Description string `json:"description,omitempty"`
 }
 
+type AddUserRoleRequest struct {
+	User userman.User `json:"user"`
+	Role roleman.Role `json:"role"`
+}
+
 func getUsers(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	page, _ := strconv.Atoi(q.Get("page"))
@@ -152,8 +157,25 @@ func AddRoleHandler(w http.ResponseWriter, r *http.Request) {
 	oapi.SendResp(w, role)
 }
 
-// func addUserRole(w http.ResponseWriter, r *http.Request) {
-// 	var input AddUserRoleRequest
-// 	// Read and parse the request body
-// 	body, err := io.ReadAll(r.Body)
-// }
+func addUserRole(w http.ResponseWriter, r *http.Request) {
+	var data *AddUserRoleRequest
+
+	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
+		oapi.CustomError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	var user = data.User
+	var role = data.Role
+	err := app.Users.AddRole(&user, &role)
+	if err != nil {
+		oapi.ServerError(w, err)
+		return
+	}
+	resp, err := app.Users.GetWithRoles(&user)
+	if err != nil {
+		oapi.ServerError(w, err)
+		return
+	}
+
+	oapi.SendResp(w, resp)
+}
