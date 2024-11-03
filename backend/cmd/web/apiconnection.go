@@ -54,7 +54,7 @@ func ToUnicode(message string) string {
 }
 
 func summarizeAPI(input Content) (*oapi.APIResponse, *ChatResponse, error) {
-	url := "https://dev-protocol.chimege.com/v1/chat/completions"
+	url := "https://chat.egune.com/v1/chat/completions"
 	promt := "Your task is to summarize the content of a text inside of <text> tag. Your job is to give short, simple, and accurate summary.\r\n\tThe result should have the following structure: \r\n\t<result>\r\n\t\t<comment>Summery of the user inputs in up to 3 sentences.give response in mongolian<\\/comment>\r\n\t<\\/result>\r\n\tHere is the text:\r\n\t<text>" + ToUnicode(input.Content) + "<\\/text>"
 	// sanuulga bichij ogoh summarize hiihdee eniig anhaaraarai geh met promt uusgej bichne
 	message := Message{
@@ -69,7 +69,7 @@ func summarizeAPI(input Content) (*oapi.APIResponse, *ChatResponse, error) {
 	var result *ChatResponse
 	req := oapi.NewRequest("POST", url)
 	req.Headers = map[string]string{
-		"Authorization": "Bearer fe6bf18e668b5bb5aff8a3b41eb17f22ec1add6b",
+		"Authorization": "Bearer tM4GWv8ckExtyuSTHg",
 		"Content-Type":  "application/json",
 	}
 	req.Data = body

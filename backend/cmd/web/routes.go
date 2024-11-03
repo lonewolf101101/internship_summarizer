@@ -20,7 +20,7 @@ func routes() http.Handler {
 	r.Get("/ping", ping)
 
 	r.Post("/addrole", AddRoleHandler)
-
+	r.Post("/postpdf", uploadPDFHandler)
 	r.With(authenticate).Route("/pub", func(r chi.Router) {
 		r.Get("/logout", clearSession)
 
