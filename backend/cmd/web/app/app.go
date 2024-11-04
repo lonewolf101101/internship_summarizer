@@ -24,7 +24,6 @@ var (
 	Config   = conf{}
 	Location *time.Location
 	Session  *sessions.Session
-
 	// Services
 	Mailer       *mailer.Mailer
 	Roles        *roleman.Service

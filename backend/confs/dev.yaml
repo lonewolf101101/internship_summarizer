@@ -1,16 +1,18 @@
 mode: debug
 port: :3300
+Summarize_ApiKey: tM4GWv8ckExtyuSTHg
+OCR_ApiKey: e63fba766214c8f49f375d3184febac94287bfe6
 session_secret: secret
 dsn: host=localhost port=5432 user=postgres password=uk04241031 dbname=chimege_internship
 timezone_loc: Asia/Ulaanbaatar
 image_path: "../images"
 oauth2:
-    google:
-        redirect_url: https://localhost:3000/pub/auth/google/callback
-        client_id: client_id
-        client_secret: client_secret
-        scopes:
-            - https://www.googleapis.com/auth/userinfo.email
-            - https://www.googleapis.com/auth/userinfo.profile
-            - openid
-        user_info_endpoint: https://www.googleapis.com/oauth2/v2/userinfo?access_token=
+  google:
+    redirect_url: http://localhost:3300/pub/auth/google/callback
+    client_id: 496996272024-95g5vk9dgvei8j8d09at5cuilpu8rr10.apps.googleusercontent.com
+    client_secret: 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
+    scopes:
+      - https://www.googleapis.com/auth/userinfo.email
+      - https://www.googleapis.com/auth/userinfo.profile
+      - openid
+    user_info_endpoint: https://www.googleapis.com/oauth2/v2/userinfo?access_token=

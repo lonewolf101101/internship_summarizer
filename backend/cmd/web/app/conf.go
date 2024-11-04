@@ -14,13 +14,15 @@ type oauthConfig struct {
 }
 
 type conf struct {
-	Mode          string `yaml:"mode"`
-	Port          string `yaml:"port"`
-	SessionSecret string `yaml:"session_secret"`
-	DSN           string `yaml:"dsn"`
-	TimezoneLoc   string `yaml:"timezone_loc"`
-	ImagePath     string `yaml:"image_path"`
-	OAuth2        struct {
+	Mode             string `yaml:"mode"`
+	Port             string `yaml:"port"`
+	SessionSecret    string `yaml:"session_secret"`
+	DSN              string `yaml:"dsn"`
+	TimezoneLoc      string `yaml:"timezone_loc"`
+	Summarize_ApiKey string `yaml:"Summarize_ApiKey"`
+	OCR_ApiKey       string `yaml:"OCR_ApiKey"`
+	ImagePath        string `yaml:"image_path"`
+	OAuth2           struct {
 		Google oauthConfig `yaml:"google"`
 	} `yaml:"oauth2"`
 }

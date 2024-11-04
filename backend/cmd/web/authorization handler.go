@@ -148,5 +148,5 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	app.Session.Put(r, "auth_user_id", user.ID)
 
-	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+	http.Redirect(w, r, "https://localhost:3000/profile", http.StatusTemporaryRedirect)
 }

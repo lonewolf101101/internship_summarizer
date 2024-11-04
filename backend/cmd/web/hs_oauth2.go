@@ -123,7 +123,7 @@ func oauthCallback(oauthClient *easyOAuth2.EasyOAuthClient) func(w http.Response
 
 		app.Session.Put(r, "auth_user_id", user.ID)
 		app.Session.Put(r, "oauth2_provider_name", oauthClient.Name)
-		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+		http.Redirect(w, r, "https://localhost:3000/profile", http.StatusTemporaryRedirect)
 	}
 }
 

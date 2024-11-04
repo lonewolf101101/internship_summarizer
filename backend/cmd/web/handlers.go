@@ -15,11 +15,6 @@ import (
 	"undrakh.net/summarizer/pkg/common/oapi"
 )
 
-type Content struct {
-	Content string `json:"content"`
-	Summary string `json:"summary"`
-}
-
 func ping(w http.ResponseWriter, _ *http.Request) {
 	w.Write([]byte("OK"))
 }
@@ -75,44 +70,115 @@ type FilePathRequest struct {
 
 const UploadDirectory = "./uploads"
 
-// uploadPDFHandler handles PDF uploads from the frontend.
 func uploadPDFHandler(w http.ResponseWriter, r *http.Request) {
-	// Ensure the request is of type application/pdf
 	if r.Header.Get("Content-Type") != "application/pdf" {
-		http.Error(w, "Invalid content type", http.StatusBadRequest)
+		oapi.ClientError(w, http.StatusUnsupportedMediaType)
 		return
 	}
 
-	// Ensure upload directory exists, create if necessary
 	if _, err := os.Stat(UploadDirectory); os.IsNotExist(err) {
 		if err := os.MkdirAll(UploadDirectory, os.ModePerm); err != nil {
-			http.Error(w, "Failed to create upload directory", http.StatusInternalServerError)
+			oapi.ServerError(w, err)
 			return
 		}
 	}
 
-	// Generate a unique filename based on the current timestamp
 	filename := fmt.Sprintf("uploaded_%d.pdf", time.Now().Unix())
 	filePath := filepath.Join(UploadDirectory, filename)
 
-	// Create a new file to save the uploaded PDF
 	file, err := os.Create(filePath)
 	if err != nil {
-		http.Error(w, "Failed to save file", http.StatusInternalServerError)
+		oapi.ServerError(w, err)
 		return
 	}
 	defer file.Close()
 
-	// Copy the PDF data from the request body to the file
 	if _, err := io.Copy(file, r.Body); err != nil {
-		http.Error(w, "Failed to save file content", http.StatusInternalServerError)
+		oapi.ServerError(w, err)
+		return
+	}
+	req := Pdf{
+		FilePath: filePath,
+	}
+
+	resp, result, err := docstoreAPI(req)
+
+	if err != nil {
+		oapi.ServerError(w, err)
+		return
+	}
+	if resp.ErrMessage != "" {
+		oapi.CustomError(w, resp.Code, resp.ErrMessage)
 		return
 	}
 
-	// Respond with a success message and file path
-	response := fmt.Sprintf("File saved successfully at %s", filePath)
-	w.Write([]byte(response))
+	Lecture, err := OCR_result(result)
+	if err != nil {
+		oapi.ServerError(w, err)
+		return
+	}
+
+	content := &Content{
+		Content: "",
+		Summary: "",
+	}
+
+	for len(Lecture) > 0 {
+		chunkSize := 3500
+
+		// Adjust chunkSize if remaining content is less than chunkSize
+		if len(Lecture) < chunkSize {
+			chunkSize = len(Lecture)
+		}
+
+		// Get the chunk and tokenize it
+		chunk := Lecture[:chunkSize]
+		tokens := tokenize(chunk) // Replace with actual tokenization method
+
+		// Ensure we don't cut off mid-token
+		for i := len(tokens) - 1; i >= 0; i-- {
+			if len(tokens[:i+1]) <= chunkSize { // Check if the token count is within limit
+				chunk = joinTokens(tokens[:i+1]) // Join back to string
+				break
+			}
+		}
+
+		content.Content = chunk // Set the content for this iteration
+
+		// Call the summarization API
+		resp, chatResp, err := summarizeAPI(*content)
+		if err != nil {
+			oapi.ServerError(w, err)
+			return
+		}
+
+		if resp.ErrMessage != "" {
+			oapi.CustomError(w, resp.Code, resp.ErrMessage)
+			return
+		}
+
+		if len(chatResp.Choices) == 0 {
+			oapi.CustomError(w, http.StatusInternalServerError, "No choices returned from summarization")
+			return
+		}
+
+		// Append the summary
+		content.Summary += chatResp.Choices[0].Message.Content
+
+		// Remove the processed chunk from Lecture
+		Lecture = Lecture[len(chunk):]
+	}
+
+	response, err := json.Marshal(content)
+	if err != nil {
+		oapi.ServerError(w, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(response)
 }
+
 func summarizer(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -156,3 +222,41 @@ func summarizer(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(response)
 }
+
+// func convertTextToPDF(w http.ResponseWriter, r *http.Request) {
+// 	if r.Method == http.MethodOptions {
+// 		w.WriteHeader(http.StatusOK)
+// 		return
+// 	}
+
+// 	textFilePath := "C:/Users/anuji/Video_summarizer/backend/uploads/textFile/summary.txt"
+// 	pdf := gofpdf.New("P", "mm", "A4", "")
+// 	pdf.AddPage()
+
+// 	log.Println("Adding font...")
+// 	pdf.AddUTF8Font("OpenSans", "", "C:/Users/anuji/Video_summarizer/backend/font/OpenSans-Regular.ttf")
+// 	pdf.SetFont("OpenSans", "", 12)
+
+// 	log.Println("Reading text file...")
+// 	content, err := os.ReadFile(textFilePath)
+// 	if err != nil {
+// 		log.Printf("Error reading text file: %v", err)
+// 		http.Error(w, "Unable to read text file", http.StatusInternalServerError)
+// 		return
+// 	}
+// 	pdf.MultiCell(0, 10, string(content), "", "", false)
+
+// 	pdfFilePath := filepath.Join("C:/Users/anuji/Video_summarizer/backend/uploads/pdf", "output.pdf")
+
+// 	log.Println("Writing PDF file...")
+// 	err = pdf.OutputFileAndClose(pdfFilePath)
+// 	if err != nil {
+// 		log.Printf("Error creating PDF file at %s: %v", pdfFilePath, err)
+// 		http.Error(w, "Unable to create PDF file", http.StatusInternalServerError)
+// 		return
+// 	}
+
+// 	w.Header().Set("Content-Type", "application/pdf")
+// 	w.Header().Set("Content-Disposition", "attachment; filename=output.pdf")
+// 	http.ServeFile(w, r, pdfFilePath)
+// }

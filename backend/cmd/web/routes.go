@@ -19,8 +19,6 @@ func routes() http.Handler {
 
 	r.Get("/ping", ping)
 
-	r.Post("/addrole", AddRoleHandler)
-	r.Post("/postpdf", uploadPDFHandler)
 	r.With(authenticate).Route("/pub", func(r chi.Router) {
 		r.Get("/logout", clearSession)
 
@@ -38,6 +36,7 @@ func routes() http.Handler {
 	r.Route("/", func(r chi.Router) {
 		r.Get("/", home)
 		r.Post("/summarize", summarizer)
+		r.Post("/postpdf", uploadPDFHandler)
 	})
 	r.With(authenticate, requireAuth).Route("/api", func(r chi.Router) {
 		r.Get("/me", me)
@@ -47,6 +46,7 @@ func routes() http.Handler {
 		r.With(requireAdmin).Route("/users", func(r chi.Router) {
 			r.Get("/", getUsers)
 			r.Post("/", editUser)
+			r.Post("/addrole", AddRoleHandler)
 			r.With(setChosenUser).Route("/{UserID}", func(r chi.Router) {
 				r.Get("/", getUser)
 				r.Put("/", editUser)

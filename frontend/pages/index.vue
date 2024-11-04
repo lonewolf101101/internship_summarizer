@@ -1,30 +1,34 @@
 <template>
-    <div>
-      <h1>Text Summarizer</h1>
-      <textarea 
-        v-model="text" 
-        placeholder="Enter your text here..." 
-        :maxlength="maxChars"
-      ></textarea>
-      <div class="char-count">
-        {{ remainingChars }} characters remaining
-      </div>
-      <button @click="submitText">Submit</button>
-      
-      <div v-if="errorMessage" class="error">{{ errorMessage }}</div>
-  
-      <div>
-        <input type="file" @change="handleFileSelection" accept=".pdf" />
-        <button @click="uploadPdf">Upload PDF to Backend</button>
-        <p v-if="response">Response from Backend: {{ response }}</p>
-      </div>
-  
-      <div v-if="response && response.summary">
-        <h2>Summary</h2>
-        <p>{{ response.summary }}</p>
-      </div>
+  <div class="container">
+    <h1>Text Summarizer</h1>
+    <textarea 
+      v-model="text" 
+      placeholder="Enter your text here..." 
+      :maxlength="maxChars"
+    ></textarea>
+    <div class="char-count">
+      {{ remainingChars }} characters remaining
     </div>
-  </template>
+    <button @click="submitText" :disabled="isLoading">
+      <span v-if="isLoading" class="loader"></span>
+      <span v-else>Submit</span>
+    </button>
+
+    <div v-if="errorMessage" class="error">{{ errorMessage }}</div>
+
+    <div>
+      <input type="file" @change="handleFileSelection" accept=".pdf" />
+      <button @click="uploadPdf">Upload PDF to Backend</button>
+    </div>
+
+    <div v-if="response && response.summary">
+      <h2>Summary</h2>
+      <textarea v-model="response.summary" rows="5"></textarea>
+      <button @click="copyToClipboard">Copy to Clipboard</button>
+    </div>
+  </div>
+</template>
+
   
   <script>
   import axios from 'axios'; // Add this line
@@ -35,8 +39,9 @@
         text: '',
         response: null,
         errorMessage: '',
-        maxChars: 1400,
+        maxChars: 2000,
         pdfFile: null,
+        isLoading: false, // Add this line
       }
     },
     computed: {
@@ -45,9 +50,19 @@
       }
     },
     methods: {
+      copyToClipboard() {
+        const textarea = document.createElement('textarea');
+        textarea.value = this.response.summary;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        this.errorMessage = 'Summary copied to clipboard!';
+      },
       async submitText() {
+        this.isLoading = true; // Set loading to true
         try {
-          const res = await fetch('/api/summarize', {
+                const res = await fetch('/api/summarize', {
             method: "POST",
             headers: {
               'Content-Type': 'application/json'
@@ -57,7 +72,7 @@
               summary: ""
             })
           });
-  
+        
           if (res.ok) {
             this.response = await res.json();
             this.errorMessage = ''; // Clear any previous error
@@ -69,8 +84,11 @@
           console.error('Error sending text to API:', error);
           this.errorMessage = 'Failed to send text to the API. Please try again.';
           this.response = null;
+        } finally {
+          this.isLoading = false; // Set loading to false after request completes
         }
       },
+
       handleFileSelection(event) {
         this.pdfFile = event.target.files[0];
       },
@@ -80,7 +98,8 @@
     return;
   }
 
-  const fileData = await this.pdfFile.arrayBuffer(); // Read as binary data
+  const formData = new FormData(); // Create a FormData object
+  formData.append('file', this.pdfFile); // Append the PDF file
 
   try {
     const response = await axios.post('/api/postpdf', fileData, {
@@ -99,7 +118,7 @@
     console.error('Error uploading PDF:', error);
     this.errorMessage = 'Failed to upload PDF. Please try again.';
   }
-},
+}
 
     }
   }
@@ -107,20 +126,35 @@
   </script>
   
   <style scoped>
-  body {
-    font-family: Arial, sans-serif;
-    background-color: #f4f7fa;
-    color: #333;
-    margin: 0;
-    padding: 0;
+  .loader {
+    border: 2px solid #f3f3f3; /* Light grey */
+    border-top: 2px solid #3498db; /* Blue */
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    animation: spin 1s linear infinite;
+    display: inline-block; /* To align it with the text */
+    margin-right: 5px; /* Space between loader and text */
   }
-  
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+
   h1 {
     text-align: center;
     color: #4a90e2;
     margin-bottom: 20px;
   }
   
+  .container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
   textarea {
     width: 100%;
     max-width: 600px;
